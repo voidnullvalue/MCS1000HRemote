@@ -1,0 +1,8 @@
+<resources>
+    <style name="Theme.MCS1000HRemote" parent="android:Theme.Material.Light">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+    </style>
+</resources>
