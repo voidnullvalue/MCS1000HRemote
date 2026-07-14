@@ -3,50 +3,39 @@ package com.mcs1000h.remote.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // ---------------------------------------------------------------------------------------------
-// Aero palette - cool blue-gray glass over a blue/cyan accent, in the spirit of Windows Vista's
-// Aero Glass theme. Semantic colors are defined per theme (rather than one hue shared by both)
-// because a single saturated tone can't clear WCAG AA text contrast against both a near-white
-// and a near-navy surface at once - see AeroPaletteLight/Dark in Aero.kt for how these pair up.
+// Warm, dense control-panel palette. No blue/purple "SaaS" accent, no glass. Terracotta reads
+// as warmth (fits a heated massage cushion); neutrals are warm paper/espresso rather than cool
+// gray. Semantic colors are theme-paired and each checked to clear WCAG AA (>=4.5:1) against
+// its own panel surface, and against the onFill content color used when it's a solid fill.
 // ---------------------------------------------------------------------------------------------
 
-// Light theme - deep enough to read as text/icons on pale glass and to hold white content on
-// top of it as a solid fill.
-val AeroAccentLight = Color(0xFF1E6FBF)
-val AeroGreenLight = Color(0xFF0C7C42)
-val AeroRedLight = Color(0xFFC0392B)
-val AeroAmberLight = Color(0xFF995400)
+val AccentLight = Color(0xFFA03D1B)
+val SuccessLight = Color(0xFF527035)
+val DangerLight = Color(0xFFA83B32)
+val WarningLight = Color(0xFF8A6318)
 
-// Dark theme - light enough to read on near-navy glass; paired with dark [OnFillDark] content
-// when used as a solid fill, since white text on these doesn't clear contrast either.
-val AeroAccentDark = Color(0xFF4FA8E8)
-val AeroGreenDark = Color(0xFF4EE092)
-val AeroRedDark = Color(0xFFFF7A7D)
-val AeroAmberDark = Color(0xFFFFC46B)
+val AccentDark = Color(0xFFE2734A)
+val SuccessDark = Color(0xFF8FB35E)
+val DangerDark = Color(0xFFE2695E)
+val WarningDark = Color(0xFFD9A73B)
 
-// Content color for text/icons placed on a solid semantic fill (buttons, selected segments).
 val OnFillLight = Color(0xFFFFFFFF)
-val OnFillDark = Color(0xFF0A1826)
+val OnFillDark = Color(0xFF140F0A)
 
-// Light "frost" scheme - pale steel-blue desktop, near-opaque frosted content, white glass.
-val FrostDesktopTop = Color(0xFFC9DCEF)
-val FrostDesktopBottom = Color(0xFFEAF2FA)
-val FrostSurface = Color(0xFFF3F8FD)
-val FrostSurfaceVariant = Color(0xFFE1EBF5)
-val FrostGlassTint = Color(0xFFFFFFFF)
-val FrostOnSurface = Color(0xFF152230)
-val FrostOnSurfaceVariant = Color(0xFF48607A)
-val FrostBorderHighlight = Color(0x99FFFFFF)
-val FrostBorderShade = Color(0x33163A5C)
-val FrostShadow = Color(0xFF6E8CAD)
+// Light "paper" scheme.
+val PaperBackground = Color(0xFFEFE6D8)
+val PaperSurface = Color(0xFFFBF7F0)
+val PaperSurfaceVariant = Color(0xFFE7DDCC)
+val PaperOnSurface = Color(0xFF2A2018)
+val PaperOnSurfaceVariant = Color(0xFF6B5D4C)
+val PaperBorder = Color(0x33352418)
+val PaperShadow = Color(0xFF3A2B1C)
 
-// Dark "obsidian glass" scheme - deep navy desktop, dark frosted content, blue glass.
-val ObsidianDesktopTop = Color(0xFF0A1826)
-val ObsidianDesktopBottom = Color(0xFF16283C)
-val ObsidianSurface = Color(0xFF1B2C40)
-val ObsidianSurfaceVariant = Color(0xFF24384F)
-val ObsidianGlassTint = Color(0xFF1E3A5A)
-val ObsidianOnSurface = Color(0xFFE7F0FA)
-val ObsidianOnSurfaceVariant = Color(0xFFA9BDD4)
-val ObsidianBorderHighlight = Color(0x66FFFFFF)
-val ObsidianBorderShade = Color(0x66000814)
-val ObsidianShadow = Color(0xFF000814)
+// Dark "espresso" scheme.
+val EspressoBackground = Color(0xFF14100C)
+val EspressoSurface = Color(0xFF1E1811)
+val EspressoSurfaceVariant = Color(0xFF2A2219)
+val EspressoOnSurface = Color(0xFFF0E8DC)
+val EspressoOnSurfaceVariant = Color(0xFFB3A28D)
+val EspressoBorder = Color(0x26FFFFFF)
+val EspressoShadow = Color(0xFF000000)

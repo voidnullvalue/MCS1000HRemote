@@ -8,36 +8,36 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 
 private val DarkColorScheme = darkColorScheme(
-    primary = AeroAccentDark,
+    primary = AccentDark,
     onPrimary = OnFillDark,
-    secondary = AeroAccentDark,
-    tertiary = AeroAmberDark,
-    background = ObsidianDesktopBottom,
-    onBackground = ObsidianOnSurface,
-    surface = ObsidianSurface,
-    onSurface = ObsidianOnSurface,
-    surfaceVariant = ObsidianSurfaceVariant,
-    onSurfaceVariant = ObsidianOnSurfaceVariant,
-    surfaceContainer = ObsidianSurface,
-    outline = ObsidianBorderShade,
-    error = AeroRedDark,
+    secondary = AccentDark,
+    tertiary = WarningDark,
+    background = EspressoBackground,
+    onBackground = EspressoOnSurface,
+    surface = EspressoSurface,
+    onSurface = EspressoOnSurface,
+    surfaceVariant = EspressoSurfaceVariant,
+    onSurfaceVariant = EspressoOnSurfaceVariant,
+    surfaceContainer = EspressoSurface,
+    outline = EspressoBorder,
+    error = DangerDark,
     onError = OnFillDark,
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = AeroAccentLight,
+    primary = AccentLight,
     onPrimary = OnFillLight,
-    secondary = AeroAccentLight,
-    tertiary = AeroAmberLight,
-    background = FrostDesktopBottom,
-    onBackground = FrostOnSurface,
-    surface = FrostSurface,
-    onSurface = FrostOnSurface,
-    surfaceVariant = FrostSurfaceVariant,
-    onSurfaceVariant = FrostOnSurfaceVariant,
-    surfaceContainer = FrostSurface,
-    outline = FrostBorderShade,
-    error = AeroRedLight,
+    secondary = AccentLight,
+    tertiary = WarningLight,
+    background = PaperBackground,
+    onBackground = PaperOnSurface,
+    surface = PaperSurface,
+    onSurface = PaperOnSurface,
+    surfaceVariant = PaperSurfaceVariant,
+    onSurfaceVariant = PaperOnSurfaceVariant,
+    surfaceContainer = PaperSurface,
+    outline = PaperBorder,
+    error = DangerLight,
     onError = OnFillLight,
 )
 
@@ -47,13 +47,13 @@ fun MCS1000HRemoteTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
-    val aeroPalette = if (darkTheme) AeroPaletteDark else AeroPaletteLight
+    val appPalette = if (darkTheme) DarkPalette else LightPalette
 
-    CompositionLocalProvider(LocalAeroPalette provides aeroPalette) {
+    CompositionLocalProvider(LocalAppPalette provides appPalette) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = Typography,
-            shapes = AeroShapes,
+            shapes = AppShapes,
             content = content,
         )
     }

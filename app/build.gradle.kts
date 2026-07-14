@@ -12,8 +12,8 @@ android {
         applicationId = "com.mcs1000h.remote"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "2.0.1"
+        versionCode = 4
+        versionName = "3.0.0"
     }
 
     buildTypes {
@@ -36,6 +36,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -54,7 +55,4 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:2.7.7")
-
-    // Backdrop blur for the Aero "frosted glass" nav bars, dialogs and overlays.
-    implementation("dev.chrisbanes.haze:haze:1.2.0")
 }

@@ -5,20 +5,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mcs1000h.remote.ble.ConnectionState
-import com.mcs1000h.remote.ui.theme.LocalAeroPalette
+import com.mcs1000h.remote.ui.theme.LocalAppPalette
 import kotlin.math.roundToInt
 
+/** Compact inline connection status row - lives directly in the header, not its own card. */
 @Composable
-fun ConnectionStatusBar(
+fun ConnectionStatusRow(
     state: ConnectionState,
     onConnectClick: () -> Unit,
     onDisconnectClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val palette = LocalAeroPalette.current
+    val palette = LocalAppPalette.current
     val statusColor = when (state) {
         ConnectionState.Connected -> palette.success
         ConnectionState.Disconnected -> palette.danger
@@ -27,41 +28,31 @@ fun ConnectionStatusBar(
     }
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .aeroPanel(palette, elevation = 3.dp, accentWash = statusColor)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             StatusDot(color = statusColor)
-            Spacer(modifier = Modifier.width(10.dp))
-            Column {
-                Text(
-                    text = "Connection",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = when (state) {
-                        ConnectionState.Idle -> "Idle"
-                        ConnectionState.Scanning -> "Scanning"
-                        ConnectionState.Connecting -> "Connecting"
-                        ConnectionState.DiscoveringServices -> "Discovering services"
-                        ConnectionState.Connected -> "Connected"
-                        ConnectionState.Disconnected -> "Disconnected"
-                        is ConnectionState.Unsupported -> state.reason
-                    },
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = statusColor,
-                )
-            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = when (state) {
+                    ConnectionState.Idle -> "Idle"
+                    ConnectionState.Scanning -> "Scanning…"
+                    ConnectionState.Connecting -> "Connecting…"
+                    ConnectionState.DiscoveringServices -> "Discovering services…"
+                    ConnectionState.Connected -> "Connected"
+                    ConnectionState.Disconnected -> "Disconnected"
+                    is ConnectionState.Unsupported -> state.reason
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = statusColor,
+            )
         }
 
         if (state != ConnectionState.Connected) {
-            AeroButton(
+            SolidButton(
                 text = "Connect",
                 onClick = onConnectClick,
                 enabled = state !in listOf(
@@ -71,20 +62,9 @@ fun ConnectionStatusBar(
                 ),
             )
         } else {
-            AeroButton(text = "Disconnect", onClick = onDisconnectClick, style = AeroButtonStyle.Destructive)
+            SolidButton(text = "Disconnect", onClick = onDisconnectClick, style = ButtonStyle.Destructive)
         }
     }
-}
-
-/** Standard "mostly opaque" content section - see [AeroCard]. */
-@Composable
-fun ControlSection(
-    title: String,
-    modifier: Modifier = Modifier,
-    icon: ImageVector? = null,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    AeroCard(title = title, modifier = modifier, icon = icon, content = content)
 }
 
 /** Grouped single-select control for mutually exclusive modes (zone, massage type, direction). */
@@ -103,7 +83,7 @@ fun ChoiceRow(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(6.dp))
-        AeroSegmentedControl(options = options, selectedIndex = selectedIndex, onSelect = onSelect)
+        SegmentedControl(options = options, selectedIndex = selectedIndex, onSelect = onSelect)
     }
 }
 
@@ -120,7 +100,7 @@ fun ToggleRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(label, style = MaterialTheme.typography.bodyMedium)
-        AeroSwitch(checked = checked, onCheckedChange = onCheckedChange)
+        AppSwitch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 
@@ -136,7 +116,7 @@ fun PositionSeekSlider(
     onSeek: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val palette = LocalAeroPalette.current
+    val palette = LocalAppPalette.current
     var dragValue by remember(currentPosition) {
         mutableFloatStateOf((currentPosition ?: 0).coerceIn(0, 100).toFloat())
     }
@@ -162,7 +142,7 @@ fun PositionSeekSlider(
             colors = SliderDefaults.colors(
                 thumbColor = palette.accent,
                 activeTrackColor = palette.accent,
-                inactiveTrackColor = palette.cardSurfaceVariant,
+                inactiveTrackColor = palette.surfaceVariant,
             ),
         )
     }

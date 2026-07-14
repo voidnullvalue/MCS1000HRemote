@@ -1,23 +1,29 @@
 package com.mcs1000h.remote
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -25,17 +31,15 @@ import androidx.core.view.WindowCompat
 import com.mcs1000h.remote.ble.ChairBleManager
 import com.mcs1000h.remote.ble.ChairProgramRunner
 import com.mcs1000h.remote.ble.ConnectionState
-import com.mcs1000h.remote.ui.AeroSegmentedControl
-import com.mcs1000h.remote.ui.ConnectionStatusBar
+import com.mcs1000h.remote.ui.BreakoutGame
+import com.mcs1000h.remote.ui.ConnectionStatusRow
 import com.mcs1000h.remote.ui.ManualScreen
 import com.mcs1000h.remote.ui.ProgramScreen
 import com.mcs1000h.remote.ui.SceneScreen
-import com.mcs1000h.remote.ui.aeroGlassChrome
-import com.mcs1000h.remote.ui.theme.LocalAeroPalette
-import com.mcs1000h.remote.ui.theme.LocalHazeState
+import com.mcs1000h.remote.ui.SegmentedControl
+import com.mcs1000h.remote.ui.panelSurface
+import com.mcs1000h.remote.ui.theme.LocalAppPalette
 import com.mcs1000h.remote.ui.theme.MCS1000HRemoteTheme
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeSource
 
 private enum class ChairTab(val label: String) {
     MANUAL("Manual"),
@@ -132,101 +136,150 @@ private fun ChairApp(
     onDisconnectClick: () -> Unit,
 ) {
     var selectedTab by remember { mutableStateOf(ChairTab.MANUAL) }
-    val palette = LocalAeroPalette.current
-    val hazeState = remember { HazeState() }
+    var showGame by remember { mutableStateOf(false) }
+    val palette = LocalAppPalette.current
 
-    CompositionLocalProvider(LocalHazeState provides hazeState) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            // Aero "desktop" wallpaper gradient - also the blur source the glass title bar reads.
+    if (showGame) {
+        BreakoutGame(onExit = { showGame = false })
+        return
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(palette.background)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .padding(horizontal = 16.dp),
+    ) {
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            "MCS-1000H Remote",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        ConnectionStatusRow(
+            state = connectionState,
+            onConnectClick = onConnectClick,
+            onDisconnectClick = onDisconnectClick,
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+
+        if (connectionState == ConnectionState.Connected && status != null) {
+            SegmentedControl(
+                options = ChairTab.entries.map { it.label },
+                selectedIndex = selectedTab.ordinal,
+                onSelect = { selectedTab = ChairTab.entries[it] },
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(Brush.verticalGradient(listOf(palette.desktopTop, palette.desktopBottom)))
-                    .hazeSource(state = hazeState),
-            )
-
-            Scaffold(
-                containerColor = Color.Transparent,
-                topBar = {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aeroGlassChrome(shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
-                            .windowInsetsPadding(WindowInsets.statusBars)
-                            .padding(horizontal = 20.dp, vertical = 14.dp),
-                    ) {
-                        Text(
-                            "MCS-1000H Remote",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        Text(
-                            "Massage cushion control",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                },
-            ) { innerPadding ->
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .panelSurface(palette),
+            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(horizontal = 16.dp),
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 14.dp),
                 ) {
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    ConnectionStatusBar(
-                        state = connectionState,
-                        onConnectClick = onConnectClick,
-                        onDisconnectClick = onDisconnectClick,
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    if (connectionState == ConnectionState.Connected && status != null) {
-                        AeroSegmentedControl(
-                            options = ChairTab.entries.map { it.label },
-                            selectedIndex = selectedTab.ordinal,
-                            onSelect = { selectedTab = ChairTab.entries[it] },
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        when (selectedTab) {
-                            ChairTab.MANUAL -> ManualScreen(status = status, chairManager = chairManager)
-                            ChairTab.SCENE -> SceneScreen(runner = programRunner)
-                            ChairTab.PROGRAMS -> ProgramScreen(runner = programRunner)
-                        }
-                    } else {
-                        Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = when (connectionState) {
-                                        ConnectionState.Idle -> "Ready to connect"
-                                        ConnectionState.Scanning -> "Scanning for chair…"
-                                        ConnectionState.Connecting -> "Connecting…"
-                                        ConnectionState.DiscoveringServices -> "Discovering services…"
-                                        ConnectionState.Connected -> "Connected"
-                                        ConnectionState.Disconnected -> "Disconnected"
-                                        is ConnectionState.Unsupported -> "Error: ${connectionState.reason}"
-                                    },
-                                    textAlign = TextAlign.Center,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "Looking for \"MCS-1000H Massage Cushion\"",
-                                    textAlign = TextAlign.Center,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                        }
+                    when (selectedTab) {
+                        ChairTab.MANUAL -> ManualScreen(status = status, chairManager = chairManager)
+                        ChairTab.SCENE -> SceneScreen(runner = programRunner)
+                        ChairTab.PROGRAMS -> ProgramScreen(runner = programRunner)
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+        } else {
+            Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = when (connectionState) {
+                            ConnectionState.Idle -> "Ready to connect"
+                            ConnectionState.Scanning -> "Scanning for chair…"
+                            ConnectionState.Connecting -> "Connecting…"
+                            ConnectionState.DiscoveringServices -> "Discovering services…"
+                            ConnectionState.Connected -> "Connected"
+                            ConnectionState.Disconnected -> "Disconnected"
+                            is ConnectionState.Unsupported -> "Error: ${connectionState.reason}"
+                        },
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Looking for \"MCS-1000H Massage Cushion\"",
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(10.dp))
+        AboutCard(onEasterEgg = { showGame = true })
+        Spacer(modifier = Modifier.height(10.dp))
+    }
+}
+
+@Composable
+private fun AboutCard(onEasterEgg: () -> Unit, modifier: Modifier = Modifier) {
+    val palette = LocalAppPalette.current
+    val context = LocalContext.current
+    var tapCount by remember { mutableIntStateOf(0) }
+    var lastTapAt by remember { mutableLongStateOf(0L) }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .panelSurface(palette)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "v${BuildConfig.VERSION_NAME}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "build ${BuildConfig.VERSION_CODE}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ) {
+                    val now = SystemClock.elapsedRealtime()
+                    tapCount = if (now - lastTapAt > 600L) 1 else tapCount + 1
+                    lastTapAt = now
+                    if (tapCount >= 3) {
+                        tapCount = 0
+                        onEasterEgg()
+                    }
+                },
+            )
+        }
+        Text(
+            text = "GitHub ↗",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = palette.accent,
+            modifier = Modifier.clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+            ) {
+                context.startActivity(
+                    Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/voidnullvalue/MCS1000HRemote")),
+                )
+            },
+        )
     }
 }

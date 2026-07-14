@@ -4,17 +4,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Shapes
 import androidx.compose.ui.unit.dp
 
-// Aero glass leans on generous, consistent rounding - panels read as soft glass "pills"
-// and "tiles" rather than sharp Material rectangles.
-val AeroCornerSmall = RoundedCornerShape(10.dp)
-val AeroCornerMedium = RoundedCornerShape(16.dp)
-val AeroCornerLarge = RoundedCornerShape(22.dp)
-val AeroCornerPill = RoundedCornerShape(50)
+// Tight, hardware-panel rounding rather than the maxed-out pill radius most mobile UI defaults
+// to - these read as machined edges, not a template's border-radius: 9999px.
+val CornerTight = RoundedCornerShape(3.dp)
+val CornerPanel = RoundedCornerShape(7.dp)
+val CornerControl = RoundedCornerShape(5.dp)
 
-val AeroShapes = Shapes(
-    extraSmall = AeroCornerSmall,
-    small = AeroCornerSmall,
-    medium = AeroCornerMedium,
-    large = AeroCornerLarge,
-    extraLarge = AeroCornerLarge,
+val AppShapes = Shapes(
+    extraSmall = CornerTight,
+    small = CornerControl,
+    medium = CornerPanel,
+    large = CornerPanel,
+    extraLarge = CornerPanel,
 )

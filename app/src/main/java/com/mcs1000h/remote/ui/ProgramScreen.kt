@@ -3,8 +3,6 @@ package com.mcs1000h.remote.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,8 +12,7 @@ import com.mcs1000h.remote.ble.ChairPresetPrograms
 import com.mcs1000h.remote.ble.ChairProgramDef
 import com.mcs1000h.remote.ble.ChairProgramRunner
 import com.mcs1000h.remote.ble.ChairScene
-import com.mcs1000h.remote.ui.theme.AeroCornerSmall
-import com.mcs1000h.remote.ui.theme.LocalAeroPalette
+import com.mcs1000h.remote.ui.theme.LocalAppPalette
 
 @Composable
 fun ProgramScreen(
@@ -24,37 +21,26 @@ fun ProgramScreen(
 ) {
     val runState by runner.state.collectAsState()
     val scope = rememberCoroutineScope()
-    val palette = LocalAeroPalette.current
+    val palette = LocalAppPalette.current
 
     var customSteps by remember { mutableStateOf(List(ChairProgramDef.MINUTES) { ChairScene() }) }
     var selectedMinute by remember { mutableIntStateOf(0) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        ControlSection("Preset Programs") {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Section("Preset Programs") {
             Text(
                 "Recovered from the OEM app's built-in database.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 8.dp),
             )
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 ChairPresetPrograms.ALL.forEach { preset ->
                     val isThisRunning = runState?.isRunning == true && runState?.program?.name == preset.name
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .aeroPanel(
-                                palette = palette,
-                                shape = AeroCornerSmall,
-                                elevation = if (isThisRunning) 4.dp else 1.dp,
-                                accentWash = if (isThisRunning) palette.accent else null,
-                            )
-                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                            .padding(vertical = 2.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -72,22 +58,23 @@ fun ProgramScreen(
                                 }
                             }
                         }
-                        AeroButton(
+                        SolidButton(
                             text = if (isThisRunning) "Restart" else "Run",
                             onClick = { runner.start(scope, preset) },
-                            style = if (isThisRunning) AeroButtonStyle.Secondary else AeroButtonStyle.Primary,
+                            style = if (isThisRunning) ButtonStyle.Secondary else ButtonStyle.Primary,
                         )
                     }
                 }
             }
         }
+        SectionDivider()
 
-        ControlSection("Custom Program") {
+        Section("Custom Program") {
             Text(
                 "Build your own 15-minute sequence - pick a minute below, set what it should do.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 12.dp),
+                modifier = Modifier.padding(bottom = 10.dp),
             )
 
             LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -101,19 +88,19 @@ fun ProgramScreen(
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = palette.accent,
                             selectedLabelColor = palette.onFill,
-                            containerColor = if (hasContent) palette.success.copy(alpha = 0.18f) else palette.cardSurfaceVariant,
+                            containerColor = if (hasContent) palette.success.copy(alpha = 0.18f) else palette.surfaceVariant,
                         ),
                         border = FilterChipDefaults.filterChipBorder(
                             enabled = true,
                             selected = isSelected,
-                            borderColor = palette.borderShade,
+                            borderColor = palette.border,
                             selectedBorderColor = palette.accent,
                         ),
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             SceneEditor(
                 scene = customSteps[selectedMinute],
@@ -122,20 +109,20 @@ fun ProgramScreen(
                 },
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             val customRunning = runState?.isRunning == true && runState?.program?.name == "Custom"
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                AeroButton(
+                SolidButton(
                     text = if (customRunning) "Restart" else "Run Custom",
                     onClick = { runner.start(scope, ChairProgramDef("Custom", customSteps)) },
                     modifier = Modifier.weight(1f),
                 )
-                AeroButton(
+                SolidButton(
                     text = "Stop",
                     onClick = { runner.stop() },
                     modifier = Modifier.weight(1f),
-                    style = AeroButtonStyle.Secondary,
+                    style = ButtonStyle.Secondary,
                     enabled = runState?.isRunning == true,
                 )
             }
