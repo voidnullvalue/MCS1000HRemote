@@ -5,10 +5,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mcs1000h.remote.ble.ConnectionState
+import com.mcs1000h.remote.ui.theme.AeroAmber
+import com.mcs1000h.remote.ui.theme.AeroGreen
+import com.mcs1000h.remote.ui.theme.AeroRed
+import com.mcs1000h.remote.ui.theme.LocalAeroPalette
 import kotlin.math.roundToInt
 
 @Composable
@@ -17,25 +21,26 @@ fun ConnectionStatusBar(
     onConnectClick: () -> Unit,
     onDisconnectClick: () -> Unit,
 ) {
+    val palette = LocalAeroPalette.current
     val statusColor = when (state) {
-        ConnectionState.Connected -> Color(0xFF4CAF50)
-        ConnectionState.Disconnected -> Color(0xFFf44336)
-        ConnectionState.Idle -> Color(0xFF2196F3)
-        else -> Color(0xFFFF9800)
+        ConnectionState.Connected -> AeroGreen
+        ConnectionState.Disconnected -> AeroRed
+        ConnectionState.Idle -> palette.accent
+        else -> AeroAmber
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = statusColor.copy(alpha = 0.1f)),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aeroPanel(palette, elevation = 3.dp, accentWash = statusColor)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+            StatusDot(color = statusColor)
+            Spacer(modifier = Modifier.width(10.dp))
+            Column {
                 Text(
                     text = "Connection",
                     style = MaterialTheme.typography.labelSmall,
@@ -56,67 +61,36 @@ fun ConnectionStatusBar(
                     color = statusColor,
                 )
             }
+        }
 
-            if (state != ConnectionState.Connected) {
-                Button(
-                    onClick = onConnectClick,
-                    modifier = Modifier.height(40.dp),
-                    enabled = state !in listOf(
-                        ConnectionState.Scanning,
-                        ConnectionState.Connecting,
-                        ConnectionState.DiscoveringServices,
-                    ),
-                ) { Text("Connect") }
-            } else {
-                Button(
-                    onClick = onDisconnectClick,
-                    modifier = Modifier.height(40.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFf44336)),
-                ) { Text("Disconnect") }
-            }
+        if (state != ConnectionState.Connected) {
+            AeroButton(
+                text = "Connect",
+                onClick = onConnectClick,
+                enabled = state !in listOf(
+                    ConnectionState.Scanning,
+                    ConnectionState.Connecting,
+                    ConnectionState.DiscoveringServices,
+                ),
+            )
+        } else {
+            AeroButton(text = "Disconnect", onClick = onDisconnectClick, style = AeroButtonStyle.Destructive)
         }
     }
 }
 
+/** Standard "mostly opaque" content section - see [AeroCard]. */
 @Composable
 fun ControlSection(
     title: String,
     modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp),
-            )
-            content()
-        }
-    }
+    AeroCard(title = title, modifier = modifier, icon = icon, content = content)
 }
 
-@Composable
-fun CommandButton(
-    label: String,
-    isActive: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Button(
-        onClick = onClick,
-        modifier = modifier.height(40.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (isActive) Color(0xFF4CAF50) else MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = if (isActive) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
-        ),
-    ) { Text(label, style = MaterialTheme.typography.labelSmall) }
-}
-
+/** Grouped single-select control for mutually exclusive modes (zone, massage type, direction). */
 @Composable
 fun ChoiceRow(
     label: String,
@@ -126,17 +100,13 @@ fun ChoiceRow(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(label, style = MaterialTheme.typography.labelMedium)
-        Spacer(modifier = Modifier.height(4.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            options.forEachIndexed { index, option ->
-                FilterChip(
-                    selected = index == selectedIndex,
-                    onClick = { onSelect(index) },
-                    label = { Text(option, style = MaterialTheme.typography.labelSmall) },
-                )
-            }
-        }
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        AeroSegmentedControl(options = options, selectedIndex = selectedIndex, onSelect = onSelect)
     }
 }
 
@@ -153,7 +123,7 @@ fun ToggleRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(label, style = MaterialTheme.typography.bodyMedium)
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        AeroSwitch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 
@@ -169,6 +139,7 @@ fun PositionSeekSlider(
     onSeek: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val palette = LocalAeroPalette.current
     var dragValue by remember(currentPosition) {
         mutableFloatStateOf((currentPosition ?: 0).coerceIn(0, 100).toFloat())
     }
@@ -177,11 +148,12 @@ fun PositionSeekSlider(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(label, style = MaterialTheme.typography.labelMedium)
+            Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
                 text = currentPosition?.let { "$it%" } ?: "—",
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = palette.accent,
+                fontWeight = FontWeight.Bold,
             )
         }
         Slider(
@@ -190,6 +162,11 @@ fun PositionSeekSlider(
             onValueChangeFinished = { onSeek(dragValue.roundToInt()) },
             valueRange = 0f..100f,
             enabled = enabled,
+            colors = SliderDefaults.colors(
+                thumbColor = palette.accent,
+                activeTrackColor = palette.accent,
+                inactiveTrackColor = palette.cardSurfaceVariant,
+            ),
         )
     }
 }

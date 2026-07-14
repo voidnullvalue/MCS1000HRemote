@@ -5,12 +5,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.mcs1000h.remote.ble.ChairProgramDef
 import com.mcs1000h.remote.ble.ChairProgramRunner
 import com.mcs1000h.remote.ble.ChairScene
+import com.mcs1000h.remote.ui.theme.AeroGreen
 
 /**
  * Builds one [ChairScene] and applies it as a 15-minute program where every
@@ -47,26 +48,33 @@ fun SceneScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                Button(
+                AeroButton(
+                    text = "Apply",
                     onClick = {
                         runner.start(scope, ChairProgramDef("Quick Scene", List(ChairProgramDef.MINUTES) { scene }))
                     },
                     modifier = Modifier.weight(1f),
-                ) { Text("Apply") }
-                OutlinedButton(
+                )
+                AeroButton(
+                    text = "Stop",
                     onClick = { runner.stop() },
                     modifier = Modifier.weight(1f),
+                    style = AeroButtonStyle.Secondary,
                     enabled = isApplied,
-                ) { Text("Stop") }
+                )
             }
 
             if (isApplied) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "Applied – holds for up to 15 minutes unless stopped.",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFF4CAF50),
-                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    StatusDot(color = AeroGreen, size = 7.dp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        "Applied – holds for up to 15 minutes unless stopped.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = AeroGreen,
+                    )
+                }
             }
         }
     }

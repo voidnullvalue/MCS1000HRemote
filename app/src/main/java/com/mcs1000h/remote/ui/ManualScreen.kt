@@ -1,18 +1,38 @@
 package com.mcs1000h.remote.ui
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AirlineSeatReclineNormal
+import androidx.compose.material.icons.filled.EventSeat
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.GpsFixed
+import androidx.compose.material.icons.filled.PowerSettingsNew
+import androidx.compose.material.icons.filled.Vibration
+import androidx.compose.material.icons.filled.Whatshot
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.mcs1000h.remote.ble.ChairBleManager
 import com.mcs1000h.remote.ble.ChairCommand
 import com.mcs1000h.remote.ble.ChairStatus
+import com.mcs1000h.remote.ui.theme.LocalAeroPalette
 import kotlinx.coroutines.launch
+
+private val ZONE_COMMANDS = listOf(ChairCommand.BACK_ZONE_FULL, ChairCommand.BACK_ZONE_UPPER, ChairCommand.BACK_ZONE_LOWER)
+private val ZONE_LABELS = listOf("Full", "Upper", "Lower")
+private val MASSAGE_COMMANDS = listOf(ChairCommand.BACK_MASSAGE_SHIATSU, ChairCommand.BACK_MASSAGE_ROLLING, ChairCommand.BACK_MASSAGE_TAPPING)
+private val MASSAGE_LABELS = listOf("Shiatsu", "Rolling", "Tapping")
+private val NECK_COMMANDS = listOf(ChairCommand.NECK_MASSAGE_FORWARD, ChairCommand.NECK_MASSAGE_REVERSE)
+private val NECK_LABELS = listOf("Forward", "Reverse")
 
 @Composable
 fun ManualScreen(
@@ -29,30 +49,36 @@ fun ManualScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        ControlSection("Power") {
-            CommandButton(
-                label = "Power",
-                isActive = status.powerOn,
-                onClick = { onCommand(ChairCommand.POWER_TOGGLE) },
-            )
-        }
+        PowerHeroCard(isOn = status.powerOn, onClick = { onCommand(ChairCommand.POWER_TOGGLE) })
 
-        ControlSection("Back") {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CommandButton("Heat", status.backHeat, { onCommand(ChairCommand.BACK_HEAT_TOGGLE) }, Modifier.weight(1f))
-                    CommandButton("Spot", status.backSpot, { onCommand(ChairCommand.BACK_SPOT) }, Modifier.weight(1f))
+        ControlSection("Back", icon = Icons.Filled.AirlineSeatReclineNormal) {
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    AeroIconToggle("Heat", Icons.Filled.Whatshot, status.backHeat, { onCommand(ChairCommand.BACK_HEAT_TOGGLE) }, Modifier.weight(1f))
+                    AeroIconToggle("Spot", Icons.Filled.GpsFixed, status.backSpot, { onCommand(ChairCommand.BACK_SPOT) }, Modifier.weight(1f))
                 }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CommandButton("Full", status.backZoneFull, { onCommand(ChairCommand.BACK_ZONE_FULL) }, Modifier.weight(1f))
-                    CommandButton("Upper", status.backZoneUpper, { onCommand(ChairCommand.BACK_ZONE_UPPER) }, Modifier.weight(1f))
-                    CommandButton("Lower", status.backZoneLower, { onCommand(ChairCommand.BACK_ZONE_LOWER) }, Modifier.weight(1f))
-                }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CommandButton("Shiatsu", status.backShiatsu, { onCommand(ChairCommand.BACK_MASSAGE_SHIATSU) }, Modifier.weight(1f))
-                    CommandButton("Rolling", status.backRolling, { onCommand(ChairCommand.BACK_MASSAGE_ROLLING) }, Modifier.weight(1f))
-                    CommandButton("Tapping", status.backTapping, { onCommand(ChairCommand.BACK_MASSAGE_TAPPING) }, Modifier.weight(1f))
-                }
+                ChoiceRow(
+                    label = "Zone",
+                    options = ZONE_LABELS,
+                    selectedIndex = when {
+                        status.backZoneFull -> 0
+                        status.backZoneUpper -> 1
+                        status.backZoneLower -> 2
+                        else -> -1
+                    },
+                    onSelect = { onCommand(ZONE_COMMANDS[it]) },
+                )
+                ChoiceRow(
+                    label = "Massage type",
+                    options = MASSAGE_LABELS,
+                    selectedIndex = when {
+                        status.backShiatsu -> 0
+                        status.backRolling -> 1
+                        status.backTapping -> 2
+                        else -> -1
+                    },
+                    onSelect = { onCommand(MASSAGE_COMMANDS[it]) },
+                )
                 PositionSeekSlider(
                     label = "Spot position (drag to seek)",
                     currentPosition = status.backPosition.takeIf { it in 0..100 },
@@ -62,16 +88,22 @@ fun ManualScreen(
             }
         }
 
-        ControlSection("Neck") {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CommandButton("Spot", status.neckSpot, { onCommand(ChairCommand.NECK_SPOT) }, Modifier.weight(1f))
-                    CommandButton("Heat", status.neckHeat, { onCommand(ChairCommand.NECK_HEAT_TOGGLE) }, Modifier.weight(1f))
+        ControlSection("Neck", icon = Icons.Filled.Face) {
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    AeroIconToggle("Spot", Icons.Filled.GpsFixed, status.neckSpot, { onCommand(ChairCommand.NECK_SPOT) }, Modifier.weight(1f))
+                    AeroIconToggle("Heat", Icons.Filled.Whatshot, status.neckHeat, { onCommand(ChairCommand.NECK_HEAT_TOGGLE) }, Modifier.weight(1f))
                 }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CommandButton("Forward", status.neckForward, { onCommand(ChairCommand.NECK_MASSAGE_FORWARD) }, Modifier.weight(1f))
-                    CommandButton("Reverse", status.neckReverse, { onCommand(ChairCommand.NECK_MASSAGE_REVERSE) }, Modifier.weight(1f))
-                }
+                ChoiceRow(
+                    label = "Direction",
+                    options = NECK_LABELS,
+                    selectedIndex = when {
+                        status.neckForward -> 0
+                        status.neckReverse -> 1
+                        else -> -1
+                    },
+                    onSelect = { onCommand(NECK_COMMANDS[it]) },
+                )
                 PositionSeekSlider(
                     label = "Spot position (drag to seek)",
                     currentPosition = status.neckPosition.takeIf { it in 0..100 },
@@ -81,21 +113,62 @@ fun ManualScreen(
             }
         }
 
-        ControlSection("Seat") {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                CommandButton("Vibration", status.seatVibration, { onCommand(ChairCommand.SEAT_VIBRATION_TOGGLE) }, Modifier.weight(1f))
-                CommandButton("Heat", status.seatHeat, { onCommand(ChairCommand.SEAT_HEAT_TOGGLE) }, Modifier.weight(1f))
+        ControlSection("Seat", icon = Icons.Filled.EventSeat) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                AeroIconToggle("Vibration", Icons.Filled.Vibration, status.seatVibration, { onCommand(ChairCommand.SEAT_VIBRATION_TOGGLE) }, Modifier.weight(1f))
+                AeroIconToggle("Heat", Icons.Filled.Whatshot, status.seatHeat, { onCommand(ChairCommand.SEAT_HEAT_TOGGLE) }, Modifier.weight(1f))
             }
         }
 
         if (status.programRunning) {
-            Text(
-                text = "Program running" + (status.programMinutesRemaining?.let { " – $it min left" } ?: ""),
-                style = MaterialTheme.typography.labelMedium,
-                modifier = Modifier.padding(horizontal = 4.dp),
-            )
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 4.dp)) {
+                StatusDot(color = LocalAeroPalette.current.accent, size = 7.dp)
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Program running" + (status.programMinutesRemaining?.let { " – $it min left" } ?: ""),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
+    }
+}
+
+@Composable
+private fun PowerHeroCard(isOn: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val palette = LocalAeroPalette.current
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .aeroPanel(palette, elevation = 6.dp, accentWash = if (isOn) palette.accent else null)
+            .padding(16.dp),
+    ) {
+        GlossyIconBadge(
+            icon = Icons.Filled.PowerSettingsNew,
+            active = isOn,
+            size = 60.dp,
+            iconPadding = 14.dp,
+            modifier = Modifier.clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick,
+            ),
+        )
+        Column {
+            Text(
+                text = "Power",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = if (isOn) "On – tap to turn off" else "Off – tap to turn on",
+                style = MaterialTheme.typography.bodySmall,
+                color = if (isOn) palette.accent else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }

@@ -9,12 +9,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.mcs1000h.remote.ble.ChairPresetPrograms
 import com.mcs1000h.remote.ble.ChairProgramDef
 import com.mcs1000h.remote.ble.ChairProgramRunner
 import com.mcs1000h.remote.ble.ChairScene
+import androidx.compose.ui.graphics.Color
+import com.mcs1000h.remote.ui.theme.AeroCornerSmall
+import com.mcs1000h.remote.ui.theme.AeroGreen
+import com.mcs1000h.remote.ui.theme.LocalAeroPalette
 
 @Composable
 fun ProgramScreen(
@@ -23,6 +26,7 @@ fun ProgramScreen(
 ) {
     val runState by runner.state.collectAsState()
     val scope = rememberCoroutineScope()
+    val palette = LocalAeroPalette.current
 
     var customSteps by remember { mutableStateOf(List(ChairProgramDef.MINUTES) { ChairScene() }) }
     var selectedMinute by remember { mutableIntStateOf(0) }
@@ -40,26 +44,42 @@ fun ProgramScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 8.dp),
             )
-            ChairPresetPrograms.ALL.forEach { preset ->
-                val isThisRunning = runState?.isRunning == true && runState?.program?.name == preset.name
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column {
-                        Text(preset.name, style = MaterialTheme.typography.bodyLarge)
-                        if (isThisRunning) {
-                            Text(
-                                "Minute ${(runState?.currentMinute ?: 0) + 1} / ${ChairProgramDef.MINUTES}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color(0xFF4CAF50),
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ChairPresetPrograms.ALL.forEach { preset ->
+                    val isThisRunning = runState?.isRunning == true && runState?.program?.name == preset.name
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aeroPanel(
+                                palette = palette,
+                                shape = AeroCornerSmall,
+                                elevation = if (isThisRunning) 4.dp else 1.dp,
+                                accentWash = if (isThisRunning) palette.accent else null,
                             )
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column {
+                            Text(preset.name, style = MaterialTheme.typography.bodyLarge)
+                            if (isThisRunning) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    StatusDot(color = AeroGreen, size = 6.dp)
+                                    Spacer(modifier = Modifier.width(5.dp))
+                                    Text(
+                                        "Minute ${(runState?.currentMinute ?: 0) + 1} / ${ChairProgramDef.MINUTES}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = AeroGreen,
+                                    )
+                                }
+                            }
                         }
+                        AeroButton(
+                            text = if (isThisRunning) "Restart" else "Run",
+                            onClick = { runner.start(scope, preset) },
+                            style = if (isThisRunning) AeroButtonStyle.Secondary else AeroButtonStyle.Primary,
+                        )
                     }
-                    Button(onClick = { runner.start(scope, preset) }) { Text(if (isThisRunning) "Restart" else "Run") }
                 }
             }
         }
@@ -80,11 +100,17 @@ fun ProgramScreen(
                         selected = isSelected,
                         onClick = { selectedMinute = minute },
                         label = { Text("${minute + 1}") },
-                        colors = if (hasContent && !isSelected) {
-                            FilterChipDefaults.filterChipColors(containerColor = Color(0xFF4CAF50).copy(alpha = 0.15f))
-                        } else {
-                            FilterChipDefaults.filterChipColors()
-                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = palette.accent,
+                            selectedLabelColor = Color.White,
+                            containerColor = if (hasContent) AeroGreen.copy(alpha = 0.18f) else palette.cardSurfaceVariant,
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = isSelected,
+                            borderColor = palette.borderShade,
+                            selectedBorderColor = palette.accent,
+                        ),
                     )
                 }
             }
@@ -102,24 +128,31 @@ fun ProgramScreen(
 
             val customRunning = runState?.isRunning == true && runState?.program?.name == "Custom"
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                Button(
+                AeroButton(
+                    text = if (customRunning) "Restart" else "Run Custom",
                     onClick = { runner.start(scope, ChairProgramDef("Custom", customSteps)) },
                     modifier = Modifier.weight(1f),
-                ) { Text(if (customRunning) "Restart" else "Run Custom") }
-                OutlinedButton(
+                )
+                AeroButton(
+                    text = "Stop",
                     onClick = { runner.stop() },
                     modifier = Modifier.weight(1f),
+                    style = AeroButtonStyle.Secondary,
                     enabled = runState?.isRunning == true,
-                ) { Text("Stop") }
+                )
             }
 
             if (customRunning) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "Running – minute ${(runState?.currentMinute ?: 0) + 1} / ${ChairProgramDef.MINUTES}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFF4CAF50),
-                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    StatusDot(color = AeroGreen, size = 7.dp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        "Running – minute ${(runState?.currentMinute ?: 0) + 1} / ${ChairProgramDef.MINUTES}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = AeroGreen,
+                    )
+                }
             }
         }
     }
