@@ -35,6 +35,15 @@ sealed interface ConnectionState {
     data class Unsupported(val reason: String) : ConnectionState
 }
 
+enum class FrameDirection { SENT, RECEIVED }
+
+/** One raw 8(or 9)-byte frame crossing the wire, for the protocol monitor. */
+data class ProtocolFrame(
+    val direction: FrameDirection,
+    val bytes: ByteArray,
+    val atMillis: Long,
+)
+
 /**
  * Owns the BLE connection to a single MCS-1000H cushion: scan, connect,
  * subscribe to status notifications, and write command frames. There is no
@@ -60,8 +69,20 @@ class ChairBleManager(context: Context) {
     private val _status = MutableStateFlow<ChairStatus?>(null)
     val status: StateFlow<ChairStatus?> = _status
 
-    private val _rawFrames = MutableSharedFlow<ByteArray>(extraBufferCapacity = 16)
-    val rawFrames: SharedFlow<ByteArray> = _rawFrames
+    private val _rssi = MutableStateFlow<Int?>(null)
+    val rssi: StateFlow<Int?> = _rssi
+
+    private val _protocolFrames = MutableSharedFlow<ProtocolFrame>(extraBufferCapacity = 64)
+    val protocolFrames: SharedFlow<ProtocolFrame> = _protocolFrames
+
+    /** GATT has no RSSI push - this polls readRemoteRssi() while connected. */
+    private val rssiPoll = object : Runnable {
+        override fun run() {
+            if (_connectionState.value != ConnectionState.Connected) return
+            gatt?.readRemoteRssi()
+            mainHandler.postDelayed(this, RSSI_POLL_MS)
+        }
+    }
 
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
@@ -96,6 +117,7 @@ class ChairBleManager(context: Context) {
                     g.close()
                     gatt = null
                     writeCharacteristic = null
+                    _rssi.value = null
                     _connectionState.value = ConnectionState.Disconnected
                 }
             }
@@ -117,6 +139,7 @@ class ChairBleManager(context: Context) {
                 g.writeDescriptor(cccd)
             }
             _connectionState.value = ConnectionState.Connected
+            mainHandler.post(rssiPoll)
         }
 
         @Suppress("DEPRECATION")
@@ -132,10 +155,14 @@ class ChairBleManager(context: Context) {
         ) {
             handleIncoming(value)
         }
+
+        override fun onReadRemoteRssi(g: BluetoothGatt, rssi: Int, status: Int) {
+            if (status == BluetoothGatt.GATT_SUCCESS) _rssi.value = rssi
+        }
     }
 
     private fun handleIncoming(value: ByteArray) {
-        _rawFrames.tryEmit(value)
+        _protocolFrames.tryEmit(ProtocolFrame(FrameDirection.RECEIVED, value, System.currentTimeMillis()))
         ChairStatus.parse(value)?.let { _status.value = it }
     }
 
@@ -193,6 +220,7 @@ class ChairBleManager(context: Context) {
 
     fun disconnect() {
         stopScan()
+        mainHandler.removeCallbacks(rssiPoll)
         gatt?.disconnect()
     }
 
@@ -208,6 +236,7 @@ class ChairBleManager(context: Context) {
         val g = gatt ?: return
         characteristic.value = frame
         g.writeCharacteristic(characteristic)
+        _protocolFrames.tryEmit(ProtocolFrame(FrameDirection.SENT, frame, System.currentTimeMillis()))
     }
 
     /**
@@ -260,5 +289,6 @@ class ChairBleManager(context: Context) {
     companion object {
         private const val TAG = "ChairBleManager"
         private const val SCAN_TIMEOUT_MS = 15_000L
+        private const val RSSI_POLL_MS = 2_500L
     }
 }

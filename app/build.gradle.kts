@@ -12,8 +12,8 @@ android {
         applicationId = "com.mcs1000h.remote"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "3.0.1"
+        versionCode = 6
+        versionName = "3.1.0"
     }
 
     buildTypes {

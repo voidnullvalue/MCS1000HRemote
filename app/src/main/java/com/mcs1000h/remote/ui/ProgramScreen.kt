@@ -7,11 +7,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.mcs1000h.remote.ble.ChairPresetPrograms
 import com.mcs1000h.remote.ble.ChairProgramDef
 import com.mcs1000h.remote.ble.ChairProgramRunner
 import com.mcs1000h.remote.ble.ChairScene
+import com.mcs1000h.remote.ble.CustomProgramStore
 import com.mcs1000h.remote.ui.theme.LocalAppPalette
 
 @Composable
@@ -22,9 +24,13 @@ fun ProgramScreen(
     val runState by runner.state.collectAsState()
     val scope = rememberCoroutineScope()
     val palette = LocalAppPalette.current
+    val context = LocalContext.current
+    val store = remember { CustomProgramStore(context) }
 
     var customSteps by remember { mutableStateOf(List(ChairProgramDef.MINUTES) { ChairScene() }) }
     var selectedMinute by remember { mutableIntStateOf(0) }
+    var savedPrograms by remember { mutableStateOf(store.loadAll()) }
+    var newProgramName by remember { mutableStateOf("") }
 
     Column(modifier = modifier.fillMaxWidth()) {
         Section("Preset Programs") {
@@ -138,6 +144,87 @@ fun ProgramScreen(
                         style = MaterialTheme.typography.labelSmall,
                         color = palette.success,
                     )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                OutlinedTextField(
+                    value = newProgramName,
+                    onValueChange = { newProgramName = it },
+                    placeholder = { Text("Name this sequence to save it", style = MaterialTheme.typography.bodyMedium) },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                    textStyle = MaterialTheme.typography.bodyMedium,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = palette.accent,
+                        unfocusedBorderColor = palette.border,
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        cursorColor = palette.accent,
+                    ),
+                )
+                SolidButton(
+                    text = "Save",
+                    enabled = newProgramName.isNotBlank(),
+                    onClick = {
+                        val name = newProgramName.trim()
+                        savedPrograms = savedPrograms.filterNot { it.name == name } + ChairProgramDef(name, customSteps)
+                        store.saveAll(savedPrograms)
+                        newProgramName = ""
+                    },
+                )
+            }
+        }
+
+        if (savedPrograms.isNotEmpty()) {
+            SectionDivider()
+            Section("Saved Programs") {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    savedPrograms.forEach { program ->
+                        val isThisRunning = runState?.isRunning == true && runState?.program?.name == program.name
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(program.name, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                                if (isThisRunning) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        StatusDot(color = palette.success, size = 6.dp)
+                                        Spacer(modifier = Modifier.width(5.dp))
+                                        Text(
+                                            "Minute ${(runState?.currentMinute ?: 0) + 1} / ${ChairProgramDef.MINUTES}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = palette.success,
+                                        )
+                                    }
+                                }
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                SolidButton(
+                                    text = if (isThisRunning) "Restart" else "Run",
+                                    onClick = { runner.start(scope, program) },
+                                    style = if (isThisRunning) ButtonStyle.Secondary else ButtonStyle.Primary,
+                                )
+                                SolidButton(
+                                    text = "Delete",
+                                    style = ButtonStyle.Destructive,
+                                    onClick = {
+                                        savedPrograms = savedPrograms.filterNot { it.name == program.name }
+                                        store.saveAll(savedPrograms)
+                                    },
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -35,6 +35,7 @@ import com.mcs1000h.remote.ui.BreakoutGame
 import com.mcs1000h.remote.ui.ConnectionStatusRow
 import com.mcs1000h.remote.ui.ManualScreen
 import com.mcs1000h.remote.ui.ProgramScreen
+import com.mcs1000h.remote.ui.ProtocolMonitor
 import com.mcs1000h.remote.ui.SceneScreen
 import com.mcs1000h.remote.ui.SegmentedControl
 import com.mcs1000h.remote.ui.panelSurface
@@ -78,10 +79,12 @@ class MainActivity : ComponentActivity() {
 
                 val connectionState by chairManager.connectionState.collectAsState()
                 val status by chairManager.status.collectAsState()
+                val rssi by chairManager.rssi.collectAsState()
 
                 ChairApp(
                     connectionState = connectionState,
                     status = status,
+                    rssi = rssi,
                     chairManager = chairManager,
                     programRunner = programRunner,
                     onConnectClick = { requestPermissionsAndConnect() },
@@ -130,6 +133,7 @@ class MainActivity : ComponentActivity() {
 private fun ChairApp(
     connectionState: ConnectionState,
     status: com.mcs1000h.remote.ble.ChairStatus?,
+    rssi: Int?,
     chairManager: ChairBleManager,
     programRunner: ChairProgramRunner,
     onConnectClick: () -> Unit,
@@ -137,10 +141,15 @@ private fun ChairApp(
 ) {
     var selectedTab by remember { mutableStateOf(ChairTab.MANUAL) }
     var showGame by remember { mutableStateOf(false) }
+    var showMonitor by remember { mutableStateOf(false) }
     val palette = LocalAppPalette.current
 
     if (showGame) {
         BreakoutGame(onExit = { showGame = false })
+        return
+    }
+    if (showMonitor) {
+        ProtocolMonitor(chairManager = chairManager, onExit = { showMonitor = false })
         return
     }
 
@@ -160,8 +169,10 @@ private fun ChairApp(
         Spacer(modifier = Modifier.height(8.dp))
         ConnectionStatusRow(
             state = connectionState,
+            rssi = rssi,
             onConnectClick = onConnectClick,
             onDisconnectClick = onDisconnectClick,
+            onStatusLongPress = { showMonitor = true },
         )
         Spacer(modifier = Modifier.height(12.dp))
 

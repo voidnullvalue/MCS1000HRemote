@@ -20,8 +20,13 @@ import kotlinx.coroutines.launch
 
 private val ZONE_COMMANDS = listOf(ChairCommand.BACK_ZONE_FULL, ChairCommand.BACK_ZONE_UPPER, ChairCommand.BACK_ZONE_LOWER)
 private val ZONE_LABELS = listOf("Full", "Upper", "Lower")
-private val MASSAGE_COMMANDS = listOf(ChairCommand.BACK_MASSAGE_SHIATSU, ChairCommand.BACK_MASSAGE_ROLLING, ChairCommand.BACK_MASSAGE_TAPPING)
-private val MASSAGE_LABELS = listOf("Shiatsu", "Rolling", "Tapping")
+private val MASSAGE_COMMANDS = listOf(
+    ChairCommand.BACK_MASSAGE_SHIATSU,
+    ChairCommand.BACK_MASSAGE_ROLLING,
+    ChairCommand.BACK_MASSAGE_TAPPING,
+    ChairCommand.BACK_MASSAGE_SHIATSU_TAPPING,
+)
+private val MASSAGE_LABELS = listOf("Shiatsu", "Rolling", "Tapping", "Shiatsu+Tap")
 private val NECK_COMMANDS = listOf(ChairCommand.NECK_MASSAGE_FORWARD, ChairCommand.NECK_MASSAGE_REVERSE)
 private val NECK_LABELS = listOf("Forward", "Reverse")
 
@@ -73,6 +78,9 @@ fun ManualScreen(
                     label = "Massage type",
                     options = MASSAGE_LABELS,
                     selectedIndex = when {
+                        // Shiatsu+Tapping sets both bits at once on the cushion's own status
+                        // frame, so it has to be checked before either bit alone.
+                        status.backShiatsu && status.backTapping -> 3
                         status.backShiatsu -> 0
                         status.backRolling -> 1
                         status.backTapping -> 2
@@ -85,6 +93,8 @@ fun ManualScreen(
                     currentPosition = status.backPosition.takeIf { it in 0..100 },
                     enabled = status.backSpot,
                     onSeek = { target -> scope.launch { chairManager.seekBackPosition(target) } },
+                    onNudgeDown = { onCommand(ChairCommand.BACK_SPOT_DOWN) },
+                    onNudgeUp = { onCommand(ChairCommand.BACK_SPOT_UP) },
                 )
             }
         }
@@ -111,6 +121,8 @@ fun ManualScreen(
                     currentPosition = status.neckPosition.takeIf { it in 0..100 },
                     enabled = status.neckSpot,
                     onSeek = { target -> scope.launch { chairManager.seekNeckPosition(target) } },
+                    onNudgeDown = { onCommand(ChairCommand.NECK_SPOT_DOWN) },
+                    onNudgeUp = { onCommand(ChairCommand.NECK_SPOT_UP) },
                 )
             }
         }
