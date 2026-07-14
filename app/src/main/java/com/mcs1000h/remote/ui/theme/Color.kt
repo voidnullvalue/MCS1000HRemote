@@ -3,39 +3,40 @@ package com.mcs1000h.remote.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // ---------------------------------------------------------------------------------------------
-// Warm, dense control-panel palette. No blue/purple "SaaS" accent, no glass. Terracotta reads
-// as warmth (fits a heated massage cushion); neutrals are warm paper/espresso rather than cool
-// gray. Semantic colors are theme-paired and each checked to clear WCAG AA (>=4.5:1) against
-// its own panel surface, and against the onFill content color used when it's a solid fill.
+// Plain grayscale control-panel palette. No hue anywhere - "active/selected" is communicated by
+// value (how dark/light) and weight, not color. Semantic roles (accent/success/danger/warning)
+// are kept as separate tokens for the rest of the codebase to key off, but they're all shades of
+// gray; danger is pushed to the extreme end (pure black/white) since it's the one state that
+// most needs to read as distinct at a glance.
 // ---------------------------------------------------------------------------------------------
 
-val AccentLight = Color(0xFFA03D1B)
-val SuccessLight = Color(0xFF527035)
-val DangerLight = Color(0xFFA83B32)
-val WarningLight = Color(0xFF8A6318)
+val AccentLight = Color(0xFF2E2E2E)
+val SuccessLight = Color(0xFF2E2E2E)
+val DangerLight = Color(0xFF000000)
+val WarningLight = Color(0xFF4D4D4D)
 
-val AccentDark = Color(0xFFE2734A)
-val SuccessDark = Color(0xFF8FB35E)
-val DangerDark = Color(0xFFE2695E)
-val WarningDark = Color(0xFFD9A73B)
+val AccentDark = Color(0xFFD0D0D0)
+val SuccessDark = Color(0xFFD0D0D0)
+val DangerDark = Color(0xFFFFFFFF)
+val WarningDark = Color(0xFF8C8C8C)
 
 val OnFillLight = Color(0xFFFFFFFF)
-val OnFillDark = Color(0xFF140F0A)
+val OnFillDark = Color(0xFF141414)
 
-// Light "paper" scheme.
-val PaperBackground = Color(0xFFEFE6D8)
-val PaperSurface = Color(0xFFFBF7F0)
-val PaperSurfaceVariant = Color(0xFFE7DDCC)
-val PaperOnSurface = Color(0xFF2A2018)
-val PaperOnSurfaceVariant = Color(0xFF6B5D4C)
-val PaperBorder = Color(0x33352418)
-val PaperShadow = Color(0xFF3A2B1C)
+// Light scheme.
+val PaperBackground = Color(0xFFEAEAEA)
+val PaperSurface = Color(0xFFF7F7F7)
+val PaperSurfaceVariant = Color(0xFFDDDDDD)
+val PaperOnSurface = Color(0xFF1C1C1C)
+val PaperOnSurfaceVariant = Color(0xFF5A5A5A)
+val PaperBorder = Color(0x26000000)
+val PaperShadow = Color(0xFF000000)
 
-// Dark "espresso" scheme.
-val EspressoBackground = Color(0xFF14100C)
-val EspressoSurface = Color(0xFF1E1811)
-val EspressoSurfaceVariant = Color(0xFF2A2219)
-val EspressoOnSurface = Color(0xFFF0E8DC)
-val EspressoOnSurfaceVariant = Color(0xFFB3A28D)
+// Dark scheme.
+val EspressoBackground = Color(0xFF161616)
+val EspressoSurface = Color(0xFF212121)
+val EspressoSurfaceVariant = Color(0xFF2E2E2E)
+val EspressoOnSurface = Color(0xFFEDEDED)
+val EspressoOnSurfaceVariant = Color(0xFFA8A8A8)
 val EspressoBorder = Color(0x26FFFFFF)
 val EspressoShadow = Color(0xFF000000)

@@ -1,11 +1,14 @@
 package com.mcs1000h.remote.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
 
 private val DarkColorScheme = darkColorScheme(
     primary = AccentDark,
@@ -54,7 +57,13 @@ fun MCS1000HRemoteTheme(
             colorScheme = colorScheme,
             typography = Typography,
             shapes = AppShapes,
-            content = content,
-        )
+        ) {
+            // Establishes LocalContentColor (defaults to onBackground) for the whole app, so any
+            // Text/Icon that omits an explicit color still resolves to the theme's text color
+            // instead of Compose's hard-coded black fallback.
+            Surface(modifier = Modifier.fillMaxSize(), color = colorScheme.background) {
+                content()
+            }
+        }
     }
 }

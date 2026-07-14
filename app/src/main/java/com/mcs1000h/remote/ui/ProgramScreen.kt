@@ -45,7 +45,7 @@ fun ProgramScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Column {
-                            Text(preset.name, style = MaterialTheme.typography.bodyLarge)
+                            Text(preset.name, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
                             if (isThisRunning) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     StatusDot(color = palette.success, size = 6.dp)
@@ -84,10 +84,11 @@ fun ProgramScreen(
                     FilterChip(
                         selected = isSelected,
                         onClick = { selectedMinute = minute },
-                        label = { Text("${minute + 1}") },
+                        label = { Text("${minute + 1}", color = if (isSelected) palette.onFill else MaterialTheme.colorScheme.onSurfaceVariant) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = palette.accent,
                             selectedLabelColor = palette.onFill,
+                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             containerColor = if (hasContent) palette.success.copy(alpha = 0.18f) else palette.surfaceVariant,
                         ),
                         border = FilterChipDefaults.filterChipBorder(
