@@ -6,13 +6,12 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
-    primary = AeroAccent,
-    onPrimary = Color(0xFF04121F),
-    secondary = AeroCyan,
-    tertiary = AeroAmber,
+    primary = AeroAccentDark,
+    onPrimary = OnFillDark,
+    secondary = AeroAccentDark,
+    tertiary = AeroAmberDark,
     background = ObsidianDesktopBottom,
     onBackground = ObsidianOnSurface,
     surface = ObsidianSurface,
@@ -21,14 +20,15 @@ private val DarkColorScheme = darkColorScheme(
     onSurfaceVariant = ObsidianOnSurfaceVariant,
     surfaceContainer = ObsidianSurface,
     outline = ObsidianBorderShade,
-    error = AeroRed,
+    error = AeroRedDark,
+    onError = OnFillDark,
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = AeroAccent,
-    onPrimary = Color.White,
-    secondary = AeroCyan,
-    tertiary = AeroAmber,
+    primary = AeroAccentLight,
+    onPrimary = OnFillLight,
+    secondary = AeroAccentLight,
+    tertiary = AeroAmberLight,
     background = FrostDesktopBottom,
     onBackground = FrostOnSurface,
     surface = FrostSurface,
@@ -37,7 +37,8 @@ private val LightColorScheme = lightColorScheme(
     onSurfaceVariant = FrostOnSurfaceVariant,
     surfaceContainer = FrostSurface,
     outline = FrostBorderShade,
-    error = AeroRed,
+    error = AeroRedLight,
+    onError = OnFillLight,
 )
 
 @Composable

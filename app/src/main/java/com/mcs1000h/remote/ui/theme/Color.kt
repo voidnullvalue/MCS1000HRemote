@@ -3,22 +3,29 @@ package com.mcs1000h.remote.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // ---------------------------------------------------------------------------------------------
-// Aero palette - cool blue-gray glass over a luminous blue/cyan accent, in the spirit of
-// Windows Vista's Aero Glass theme. Two families: a light "frost" scheme and a dark
-// "obsidian glass" scheme, both built around the same accent hues.
+// Aero palette - cool blue-gray glass over a blue/cyan accent, in the spirit of Windows Vista's
+// Aero Glass theme. Semantic colors are defined per theme (rather than one hue shared by both)
+// because a single saturated tone can't clear WCAG AA text contrast against both a near-white
+// and a near-navy surface at once - see AeroPaletteLight/Dark in Aero.kt for how these pair up.
 // ---------------------------------------------------------------------------------------------
 
-// Luminous accent - the "glowing edge" blue/cyan used for active states, focus rings and glow.
-val AeroAccent = Color(0xFF2E9FE6)
-val AeroAccentBright = Color(0xFF6FE3FF)
-val AeroCyan = Color(0xFF3FCFE0)
+// Light theme - deep enough to read as text/icons on pale glass and to hold white content on
+// top of it as a solid fill.
+val AeroAccentLight = Color(0xFF1E6FBF)
+val AeroGreenLight = Color(0xFF0C7C42)
+val AeroRedLight = Color(0xFFC0392B)
+val AeroAmberLight = Color(0xFF995400)
 
-// Status semantics, cooled slightly to sit inside the Aero family.
-val AeroGreen = Color(0xFF3DDC84)
-val AeroGreenGlow = Color(0xFF7CF0B2)
-val AeroAmber = Color(0xFFFFB347)
-val AeroRed = Color(0xFFE5484D)
-val AeroRedGlow = Color(0xFFFF8A8E)
+// Dark theme - light enough to read on near-navy glass; paired with dark [OnFillDark] content
+// when used as a solid fill, since white text on these doesn't clear contrast either.
+val AeroAccentDark = Color(0xFF4FA8E8)
+val AeroGreenDark = Color(0xFF4EE092)
+val AeroRedDark = Color(0xFFFF7A7D)
+val AeroAmberDark = Color(0xFFFFC46B)
+
+// Content color for text/icons placed on a solid semantic fill (buttons, selected segments).
+val OnFillLight = Color(0xFFFFFFFF)
+val OnFillDark = Color(0xFF0A1826)
 
 // Light "frost" scheme - pale steel-blue desktop, near-opaque frosted content, white glass.
 val FrostDesktopTop = Color(0xFFC9DCEF)
@@ -28,7 +35,7 @@ val FrostSurfaceVariant = Color(0xFFE1EBF5)
 val FrostGlassTint = Color(0xFFFFFFFF)
 val FrostOnSurface = Color(0xFF152230)
 val FrostOnSurfaceVariant = Color(0xFF48607A)
-val FrostBorderHighlight = Color(0xCCFFFFFF)
+val FrostBorderHighlight = Color(0x99FFFFFF)
 val FrostBorderShade = Color(0x33163A5C)
 val FrostShadow = Color(0xFF6E8CAD)
 
@@ -40,6 +47,6 @@ val ObsidianSurfaceVariant = Color(0xFF24384F)
 val ObsidianGlassTint = Color(0xFF1E3A5A)
 val ObsidianOnSurface = Color(0xFFE7F0FA)
 val ObsidianOnSurfaceVariant = Color(0xFFA9BDD4)
-val ObsidianBorderHighlight = Color(0x99FFFFFF)
+val ObsidianBorderHighlight = Color(0x66FFFFFF)
 val ObsidianBorderShade = Color(0x66000814)
 val ObsidianShadow = Color(0xFF000814)

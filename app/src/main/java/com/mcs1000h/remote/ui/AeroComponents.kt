@@ -30,10 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -43,7 +41,6 @@ import com.mcs1000h.remote.ui.theme.AeroCornerMedium
 import com.mcs1000h.remote.ui.theme.AeroCornerPill
 import com.mcs1000h.remote.ui.theme.AeroCornerSmall
 import com.mcs1000h.remote.ui.theme.AeroPalette
-import com.mcs1000h.remote.ui.theme.AeroRed
 import com.mcs1000h.remote.ui.theme.LocalAeroPalette
 import com.mcs1000h.remote.ui.theme.LocalHazeState
 import dev.chrisbanes.haze.HazeStyle
@@ -51,57 +48,49 @@ import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 
 // -------------------------------------------------------------------------------------------
-// Aero surfaces - the frosted-glass "panel" look shared by cards, bars and dialogs.
+// Aero surfaces - flat, near-opaque fills with a single-tone border and a plain drop shadow.
+// Earlier drafts layered a gradient sheen + gradient border on every surface; that's gone -
+// it made background lightness vary behind text (inconsistent contrast) for no functional
+// gain. Glass/blur is reserved for the top bar only, per the brief.
 // -------------------------------------------------------------------------------------------
 
-private fun Color.lighten(amount: Float) = lerp(this, Color.White, amount)
-private fun Color.darken(amount: Float) = lerp(this, Color.Black, amount)
-
-/**
- * Mostly-opaque content panel: readable, with just a hint of glass sheen and a lit top edge.
- * This is the workhorse surface for cards and control sections - per the brief, main content
- * stays legible rather than fully see-through.
- */
+/** Mostly-opaque content panel: readable first, "glass" second. */
 fun Modifier.aeroPanel(
     palette: AeroPalette,
     shape: Shape = AeroCornerMedium,
-    baseAlpha: Float = if (palette.isDark) 0.86f else 0.92f,
-    elevation: Dp = 4.dp,
+    baseAlpha: Float = if (palette.isDark) 0.94f else 0.97f,
+    elevation: Dp = 2.dp,
     accentWash: Color? = null,
 ): Modifier = this
     .shadow(
         elevation = elevation,
         shape = shape,
-        ambientColor = palette.shadowColor.copy(alpha = 0.28f),
-        spotColor = palette.shadowColor.copy(alpha = 0.35f),
+        ambientColor = palette.shadowColor.copy(alpha = 0.18f),
+        spotColor = palette.shadowColor.copy(alpha = 0.22f),
     )
     .clip(shape)
     .background(palette.cardSurface.copy(alpha = baseAlpha))
     .then(
+        // Kept faint enough that accent-colored text/icons drawn on top (e.g. an active
+        // toggle's own label) still clear WCAG AA against the tinted background.
         if (accentWash != null) {
-            Modifier.background(accentWash.copy(alpha = if (palette.isDark) 0.22f else 0.14f))
+            Modifier.background(accentWash.copy(alpha = if (palette.isDark) 0.08f else 0.04f))
         } else {
             Modifier
         },
     )
-    .background(
-        Brush.verticalGradient(
-            0f to Color.White.copy(alpha = if (palette.isDark) 0.05f else 0.45f),
-            0.5f to Color.Transparent,
-        ),
-    )
-    .border(1.dp, Brush.verticalGradient(listOf(palette.borderHighlight, palette.borderShade)), shape)
+    .border(1.dp, palette.borderShade, shape)
 
 /**
  * True frosted glass: blurs whatever is behind it via Haze. Falls back to a flat translucent
  * scrim when no [LocalHazeState] is available - matches Haze's own fallback behavior on
- * devices/API levels it can't blur on, so the degraded look is still intentional and glassy.
- * Reserved for navigation bars, dialogs and overlays per the design brief.
+ * devices/API levels it can't blur on. Reserved for the top bar per the design brief; everything
+ * else uses [aeroPanel] so on-screen text sits on a predictable, readable background.
  */
 @Composable
 fun Modifier.aeroGlassChrome(
     shape: Shape = AeroCornerMedium,
-    elevation: Dp = 10.dp,
+    elevation: Dp = 6.dp,
 ): Modifier {
     val palette = LocalAeroPalette.current
     val hazeState = LocalHazeState.current
@@ -114,33 +103,31 @@ fun Modifier.aeroGlassChrome(
                 backgroundColor = palette.cardSurface,
                 tint = HazeTint(palette.glassTint.copy(alpha = tintAlpha)),
                 blurRadius = 26.dp,
-                noiseFactor = if (palette.isDark) 0.08f else 0.05f,
+                noiseFactor = if (palette.isDark) 0.05f else 0.03f,
             ),
         )
     } else {
-        Modifier.background(palette.glassTint.copy(alpha = tintAlpha + 0.2f))
+        // No blur available on this API level - still lay down an opaque base first so text
+        // contrast doesn't depend on whatever wallpaper color happens to sit behind it.
+        Modifier
+            .background(palette.cardSurface)
+            .background(palette.glassTint.copy(alpha = tintAlpha))
     }
 
     return this
         .shadow(
             elevation = elevation,
             shape = shape,
-            ambientColor = palette.shadowColor.copy(alpha = 0.3f),
-            spotColor = palette.shadowColor.copy(alpha = 0.4f),
+            ambientColor = palette.shadowColor.copy(alpha = 0.22f),
+            spotColor = palette.shadowColor.copy(alpha = 0.26f),
         )
         .clip(shape)
         .then(glassLayer)
-        .background(
-            Brush.verticalGradient(
-                0f to Color.White.copy(alpha = if (palette.isDark) 0.10f else 0.55f),
-                0.3f to Color.Transparent,
-            ),
-        )
-        .border(1.dp, Brush.verticalGradient(listOf(palette.borderHighlight, palette.borderShade)), shape)
+        .border(1.dp, palette.borderHighlight, shape)
 }
 
 // -------------------------------------------------------------------------------------------
-// AeroCard - the standard "mostly opaque" content section container.
+// AeroCard - the standard content section container.
 // -------------------------------------------------------------------------------------------
 
 @Composable
@@ -173,7 +160,7 @@ fun AeroCard(
 }
 
 // -------------------------------------------------------------------------------------------
-// GlossyIconBadge - a small dimensional glass "orb" behind an icon.
+// GlossyIconBadge - a small dimensional icon badge: flat fill, thin border, one soft glint.
 // -------------------------------------------------------------------------------------------
 
 @Composable
@@ -188,36 +175,35 @@ fun GlossyIconBadge(
     val palette = LocalAeroPalette.current
     val accent = activeColor ?: palette.accent
     val base = if (active) accent else palette.cardSurfaceVariant
-    val top = if (active) accent.lighten(0.35f) else base.lighten(if (palette.isDark) 0.18f else 0.5f)
-    val bottom = if (active) accent.darken(0.15f) else base.darken(if (palette.isDark) 0.05f else 0.06f)
+    val contentColor = if (active) palette.onFill else MaterialTheme.colorScheme.onSurfaceVariant
 
     Box(
         modifier = modifier
             .size(size)
             .shadow(
-                elevation = if (active) 8.dp else 2.dp,
+                elevation = if (active) 4.dp else 1.dp,
                 shape = CircleShape,
-                ambientColor = if (active) accent.copy(alpha = 0.55f) else palette.shadowColor.copy(alpha = 0.2f),
-                spotColor = if (active) accent.copy(alpha = 0.65f) else palette.shadowColor.copy(alpha = 0.25f),
+                ambientColor = if (active) accent.copy(alpha = 0.35f) else palette.shadowColor.copy(alpha = 0.15f),
+                spotColor = if (active) accent.copy(alpha = 0.4f) else palette.shadowColor.copy(alpha = 0.18f),
             )
             .clip(CircleShape)
-            .background(Brush.verticalGradient(listOf(top, bottom)))
-            .border(1.dp, Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.6f), Color.Transparent)), CircleShape),
+            .background(base)
+            .border(1.dp, palette.borderShade, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        // Restrained specular highlight - a soft blurred glint near the top edge.
+        // One restrained specular glint - enough to read as dimensional without a full gradient.
         Box(
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .offset(x = size * 0.18f, y = size * 0.1f)
-                .size(size * 0.42f)
-                .blur(size * 0.22f)
-                .background(Color.White.copy(alpha = if (active) 0.35f else 0.4f), CircleShape),
+                .offset(x = size * 0.2f, y = size * 0.12f)
+                .size(size * 0.34f)
+                .blur(size * 0.2f)
+                .background(Color.White.copy(alpha = if (active) 0.2f else 0.25f), CircleShape),
         )
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = if (active) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = contentColor,
             modifier = Modifier.padding(iconPadding).size(size - iconPadding * 2),
         )
     }
@@ -225,8 +211,6 @@ fun GlossyIconBadge(
 
 // -------------------------------------------------------------------------------------------
 // AeroIconToggle - icon + label toggle tile for boolean chair features (heat, spot, vibration).
-// Replaces bare text CommandButtons so on/off features read as dimensional controls rather
-// than a flat row of identically-styled buttons.
 // -------------------------------------------------------------------------------------------
 
 @Composable
@@ -244,7 +228,7 @@ fun AeroIconToggle(
             .aeroPanel(
                 palette = palette,
                 shape = AeroCornerSmall,
-                elevation = if (isActive) 6.dp else 2.dp,
+                elevation = if (isActive) 3.dp else 1.dp,
                 accentWash = if (isActive) palette.accent else null,
             )
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick)
@@ -280,9 +264,8 @@ fun AeroSegmentedControl(
         modifier = modifier
             .fillMaxWidth()
             .height(38.dp)
-            .shadow(1.dp, AeroCornerPill, ambientColor = palette.shadowColor.copy(alpha = 0.15f))
             .clip(AeroCornerPill)
-            .background(palette.cardSurfaceVariant.copy(alpha = if (palette.isDark) 0.7f else 0.8f))
+            .background(palette.cardSurfaceVariant)
             .border(1.dp, palette.borderShade, AeroCornerPill)
             .padding(3.dp),
     ) {
@@ -294,16 +277,7 @@ fun AeroSegmentedControl(
                     .fillMaxHeight()
                     .then(
                         if (selected) {
-                            Modifier
-                                .shadow(
-                                    4.dp,
-                                    AeroCornerPill,
-                                    ambientColor = palette.accent.copy(alpha = 0.5f),
-                                    spotColor = palette.accent.copy(alpha = 0.6f),
-                                )
-                                .clip(AeroCornerPill)
-                                .background(Brush.verticalGradient(listOf(palette.accent.lighten(0.25f), palette.accent.darken(0.1f))))
-                                .border(1.dp, Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.7f), Color.Transparent)), AeroCornerPill)
+                            Modifier.clip(AeroCornerPill).background(palette.accent)
                         } else {
                             Modifier.clip(AeroCornerPill)
                         },
@@ -315,7 +289,7 @@ fun AeroSegmentedControl(
                     text = option,
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
-                    color = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (selected) palette.onFill else MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     textAlign = TextAlign.Center,
                 )
@@ -325,7 +299,7 @@ fun AeroSegmentedControl(
 }
 
 // -------------------------------------------------------------------------------------------
-// AeroButton - raised glossy buttons for primary / secondary / destructive actions.
+// AeroButton - flat-fill buttons for primary / secondary / destructive actions.
 // -------------------------------------------------------------------------------------------
 
 enum class AeroButtonStyle { Primary, Secondary, Destructive }
@@ -342,10 +316,10 @@ fun AeroButton(
     val palette = LocalAeroPalette.current
     val baseColor = when (style) {
         AeroButtonStyle.Primary -> palette.accent
-        AeroButtonStyle.Destructive -> AeroRed
+        AeroButtonStyle.Destructive -> palette.danger
         AeroButtonStyle.Secondary -> palette.cardSurfaceVariant
     }
-    val contentColor = if (style == AeroButtonStyle.Secondary) MaterialTheme.colorScheme.onSurface else Color.White
+    val contentColor = if (style == AeroButtonStyle.Secondary) MaterialTheme.colorScheme.onSurface else palette.onFill
     val alpha = if (enabled) 1f else 0.45f
 
     Row(
@@ -354,24 +328,14 @@ fun AeroButton(
         modifier = modifier
             .height(44.dp)
             .shadow(
-                elevation = if (style == AeroButtonStyle.Secondary) 2.dp else 8.dp,
+                elevation = if (style == AeroButtonStyle.Secondary) 1.dp else 3.dp,
                 shape = AeroCornerPill,
-                ambientColor = baseColor.copy(alpha = 0.45f * alpha),
-                spotColor = baseColor.copy(alpha = 0.55f * alpha),
+                ambientColor = baseColor.copy(alpha = 0.22f * alpha),
+                spotColor = baseColor.copy(alpha = 0.26f * alpha),
             )
             .clip(AeroCornerPill)
-            .background(
-                if (style == AeroButtonStyle.Secondary) {
-                    Brush.verticalGradient(listOf(baseColor.lighten(0.1f).copy(alpha = alpha), baseColor.copy(alpha = alpha)))
-                } else {
-                    Brush.verticalGradient(listOf(baseColor.lighten(0.3f).copy(alpha = alpha), baseColor.darken(0.12f).copy(alpha = alpha)))
-                },
-            )
-            .border(
-                width = 1.dp,
-                brush = Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.65f * alpha), palette.borderShade)),
-                shape = AeroCornerPill,
-            )
+            .background(baseColor.copy(alpha = alpha))
+            .border(1.dp, palette.borderShade.copy(alpha = alpha), AeroCornerPill)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -393,7 +357,7 @@ fun AeroButton(
 }
 
 // -------------------------------------------------------------------------------------------
-// AeroSwitch - Material3 Switch retinted to the Aero accent, glass track.
+// AeroSwitch - Material3 Switch retinted to the Aero accent.
 // -------------------------------------------------------------------------------------------
 
 @Composable
@@ -404,10 +368,10 @@ fun AeroSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, modifier: M
         onCheckedChange = onCheckedChange,
         modifier = modifier,
         colors = SwitchDefaults.colors(
-            checkedThumbColor = Color.White,
+            checkedThumbColor = palette.onFill,
             checkedTrackColor = palette.accent,
             checkedBorderColor = Color.Transparent,
-            uncheckedThumbColor = if (palette.isDark) palette.cardSurfaceVariant.lighten(0.3f) else Color.White,
+            uncheckedThumbColor = palette.cardSurface,
             uncheckedTrackColor = palette.cardSurfaceVariant,
             uncheckedBorderColor = palette.borderShade,
         ),
@@ -415,7 +379,7 @@ fun AeroSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, modifier: M
 }
 
 // -------------------------------------------------------------------------------------------
-// StatusDot - small glowing indicator dot used in status bars / headers.
+// StatusDot - small solid indicator dot used in status bars / headers.
 // -------------------------------------------------------------------------------------------
 
 @Composable
@@ -423,8 +387,8 @@ fun StatusDot(color: Color, modifier: Modifier = Modifier, size: Dp = 9.dp) {
     Box(
         modifier = modifier
             .size(size)
-            .shadow(6.dp, CircleShape, ambientColor = color.copy(alpha = 0.8f), spotColor = color.copy(alpha = 0.9f))
+            .shadow(2.dp, CircleShape, ambientColor = color.copy(alpha = 0.4f), spotColor = color.copy(alpha = 0.45f))
             .clip(CircleShape)
-            .background(Brush.radialGradient(listOf(color.lighten(0.4f), color))),
+            .background(color),
     )
 }

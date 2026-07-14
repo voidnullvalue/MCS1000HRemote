@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 import com.mcs1000h.remote.ble.ChairProgramDef
 import com.mcs1000h.remote.ble.ChairProgramRunner
 import com.mcs1000h.remote.ble.ChairScene
-import com.mcs1000h.remote.ui.theme.AeroGreen
+import com.mcs1000h.remote.ui.theme.LocalAeroPalette
 
 /**
  * Builds one [ChairScene] and applies it as a 15-minute program where every
@@ -28,6 +28,7 @@ fun SceneScreen(
     val runState by runner.state.collectAsState()
     val isApplied = runState?.isRunning == true
     val scope = rememberCoroutineScope()
+    val palette = LocalAeroPalette.current
 
     Column(
         modifier = modifier
@@ -67,12 +68,12 @@ fun SceneScreen(
             if (isApplied) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    StatusDot(color = AeroGreen, size = 7.dp)
+                    StatusDot(color = palette.success, size = 7.dp)
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         "Applied – holds for up to 15 minutes unless stopped.",
                         style = MaterialTheme.typography.labelSmall,
-                        color = AeroGreen,
+                        color = palette.success,
                     )
                 }
             }

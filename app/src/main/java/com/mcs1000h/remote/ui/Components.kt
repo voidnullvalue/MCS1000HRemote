@@ -9,9 +9,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mcs1000h.remote.ble.ConnectionState
-import com.mcs1000h.remote.ui.theme.AeroAmber
-import com.mcs1000h.remote.ui.theme.AeroGreen
-import com.mcs1000h.remote.ui.theme.AeroRed
 import com.mcs1000h.remote.ui.theme.LocalAeroPalette
 import kotlin.math.roundToInt
 
@@ -23,10 +20,10 @@ fun ConnectionStatusBar(
 ) {
     val palette = LocalAeroPalette.current
     val statusColor = when (state) {
-        ConnectionState.Connected -> AeroGreen
-        ConnectionState.Disconnected -> AeroRed
+        ConnectionState.Connected -> palette.success
+        ConnectionState.Disconnected -> palette.danger
         ConnectionState.Idle -> palette.accent
-        else -> AeroAmber
+        else -> palette.warning
     }
 
     Row(

@@ -14,9 +14,7 @@ import com.mcs1000h.remote.ble.ChairPresetPrograms
 import com.mcs1000h.remote.ble.ChairProgramDef
 import com.mcs1000h.remote.ble.ChairProgramRunner
 import com.mcs1000h.remote.ble.ChairScene
-import androidx.compose.ui.graphics.Color
 import com.mcs1000h.remote.ui.theme.AeroCornerSmall
-import com.mcs1000h.remote.ui.theme.AeroGreen
 import com.mcs1000h.remote.ui.theme.LocalAeroPalette
 
 @Composable
@@ -64,12 +62,12 @@ fun ProgramScreen(
                             Text(preset.name, style = MaterialTheme.typography.bodyLarge)
                             if (isThisRunning) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    StatusDot(color = AeroGreen, size = 6.dp)
+                                    StatusDot(color = palette.success, size = 6.dp)
                                     Spacer(modifier = Modifier.width(5.dp))
                                     Text(
                                         "Minute ${(runState?.currentMinute ?: 0) + 1} / ${ChairProgramDef.MINUTES}",
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = AeroGreen,
+                                        color = palette.success,
                                     )
                                 }
                             }
@@ -102,8 +100,8 @@ fun ProgramScreen(
                         label = { Text("${minute + 1}") },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = palette.accent,
-                            selectedLabelColor = Color.White,
-                            containerColor = if (hasContent) AeroGreen.copy(alpha = 0.18f) else palette.cardSurfaceVariant,
+                            selectedLabelColor = palette.onFill,
+                            containerColor = if (hasContent) palette.success.copy(alpha = 0.18f) else palette.cardSurfaceVariant,
                         ),
                         border = FilterChipDefaults.filterChipBorder(
                             enabled = true,
@@ -145,12 +143,12 @@ fun ProgramScreen(
             if (customRunning) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    StatusDot(color = AeroGreen, size = 7.dp)
+                    StatusDot(color = palette.success, size = 7.dp)
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         "Running – minute ${(runState?.currentMinute ?: 0) + 1} / ${ChairProgramDef.MINUTES}",
                         style = MaterialTheme.typography.labelSmall,
-                        color = AeroGreen,
+                        color = palette.success,
                     )
                 }
             }
